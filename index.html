@@ -36,11 +36,30 @@
     <div id="user-info" style="margin-top:1rem;"></div>
   </div>
 
+  <!-- List Management UI (hidden until user logs in) -->
+  <div id="list-management" style="display:none; margin-top:2rem;">
+    <h2>Your Shopping Lists</h2>
+    <div id="recurring-section" style="margin-bottom:1.5rem;">
+      <h3>Recurring Items</h3>
+      <ul id="recurring-list"></ul>
+      <input id="recurring-item" type="text" placeholder="Add recurring item" />
+      <button id="add-recurring">Add</button>
+    </div>
+    <div id="extra-section">
+      <h3>Extra Items</h3>
+      <ul id="extra-list"></ul>
+      <input id="extra-item" type="text" placeholder="Add extra item" />
+      <button id="add-extra">Add</button>
+    </div>
+  </div>
+
   <!-- Firebase SDKs -->
   <!-- Firebase App (the core Firebase SDK) -->
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
   <!-- Firebase Authentication -->
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js"></script>
+  <!-- Firebase Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
   <script>
     // TODO: Replace with your project's Firebase configuration. You can find these values
     // in your Firebase project settings. Without valid keys, authentication will not work.

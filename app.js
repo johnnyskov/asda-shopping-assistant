@@ -28,6 +28,95 @@ if (typeof firebase !== 'undefined') {
   const showLoginBtn = document.getElementById('show-login');
   const userInfoDiv = document.getElementById('user-info');
 
+  // References for list management UI
+  const listManagementDiv = document.getElementById('list-management');
+  const recurringListEl = document.getElementById('recurring-list');
+  const extraListEl = document.getElementById('extra-list');
+  const recurringInput = document.getElementById('recurring-item');
+  const extraInput = document.getElementById('extra-item');
+  const addRecurringBtn = document.getElementById('add-recurring');
+  const addExtraBtn = document.getElementById('add-extra');
+
+  // Initialize Firestore service
+  const db = firebase.firestore ? firebase.firestore() : null;
+
+  // Keep track of the current authenticated user and Firestore listener
+  let currentUser = null;
+  let unsubscribeLists = null;
+
+  /**
+   * Render a list of items into a given UL element.
+   * Clears existing children before rendering.
+   * @param {HTMLElement} listElement - The UL element to populate.
+   * @param {Array<string>} items - Array of item strings.
+   */
+  function renderList(listElement, items) {
+    if (!listElement) return;
+    listElement.innerHTML = '';
+    if (Array.isArray(items)) {
+      items.forEach((item) => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        listElement.appendChild(li);
+      });
+    }
+  }
+
+  /**
+   * Subscribe to changes in the user's lists document and update the UI in real-time.
+   * Returns a function to unsubscribe from the listener.
+   * @param {firebase.User} user - The currently authenticated user.
+   */
+  function subscribeToLists(user) {
+    if (!db || !user) return null;
+    const docRef = db.collection('users').doc(user.uid);
+    return docRef.onSnapshot((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      renderList(recurringListEl, data.recurring || []);
+      renderList(extraListEl, data.extra || []);
+    });
+  }
+
+  /**
+   * Add an item to the user's recurring or extra list in Firestore.
+   * Uses arrayUnion to avoid duplicates.
+   * @param {string} type - Either 'recurring' or 'extra'.
+   * @param {string} item - The item text to add.
+   */
+  function addItem(type, item) {
+    if (!db || !currentUser || !item) return;
+    const docRef = db.collection('users').doc(currentUser.uid);
+    const updateData = {};
+    updateData[type] = firebase.firestore.FieldValue.arrayUnion(item);
+    docRef.set(updateData, { merge: true })
+      .catch((error) => {
+        console.error(`Error adding ${type} item:`, error);
+        alert(error.message);
+      });
+  }
+
+  // Attach list management event listeners
+  if (addRecurringBtn) {
+    addRecurringBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const value = recurringInput ? recurringInput.value.trim() : '';
+      if (value) {
+        addItem('recurring', value);
+        recurringInput.value = '';
+      }
+    });
+  }
+  if (addExtraBtn) {
+    addExtraBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const value = extraInput ? extraInput.value.trim() : '';
+      if (value) {
+        addItem('extra', value);
+        extraInput.value = '';
+      }
+    });
+  }
+
   /**
    * Toggle visibility of the registration form and hide the login form.
    */
@@ -121,6 +210,7 @@ if (typeof firebase !== 'undefined') {
   auth.onAuthStateChanged((user) => {
     if (user) {
       // User is signed in, update UI to reflect logged in state
+      currentUser = user;
       if (userInfoDiv) {
         userInfoDiv.textContent = 'Logged in as ' + (user.email || '');
         userInfoDiv.style.display = 'block';
@@ -130,8 +220,14 @@ if (typeof firebase !== 'undefined') {
       if (loginForm) loginForm.style.display = 'none';
       if (showRegisterBtn) showRegisterBtn.style.display = 'none';
       if (showLoginBtn) showLoginBtn.style.display = 'none';
+      // Show list management UI
+      if (listManagementDiv) listManagementDiv.style.display = 'block';
+      // Subscribe to list updates
+      if (unsubscribeLists) unsubscribeLists();
+      unsubscribeLists = subscribeToLists(user);
     } else {
       // User is signed out, show registration and login buttons
+      currentUser = null;
       if (userInfoDiv) userInfoDiv.style.display = 'none';
       if (logoutBtn) logoutBtn.style.display = 'none';
       if (showRegisterBtn) showRegisterBtn.style.display = 'inline-block';
@@ -139,6 +235,14 @@ if (typeof firebase !== 'undefined') {
       // Hide forms by default; user can choose which one to show
       if (registerForm) registerForm.style.display = 'none';
       if (loginForm) loginForm.style.display = 'none';
+      // Hide list management UI and clear lists
+      if (listManagementDiv) listManagementDiv.style.display = 'none';
+      renderList(recurringListEl, []);
+      renderList(extraListEl, []);
+      if (unsubscribeLists) {
+        unsubscribeLists();
+        unsubscribeLists = null;
+      }
     }
   });
 } else {
