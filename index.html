@@ -42,15 +42,33 @@
     <div id="recurring-section" style="margin-bottom:1.5rem;">
       <h3>Recurring Items</h3>
       <ul id="recurring-list"></ul>
-      <input id="recurring-item" type="text" placeholder="Add recurring item" />
+      <input id="recurring-item" type="text" list="recurring-suggestions" placeholder="Add recurring item" />
+      <datalist id="recurring-suggestions"></datalist>
       <button id="add-recurring">Add</button>
     </div>
     <div id="extra-section">
       <h3>Extra Items</h3>
       <ul id="extra-list"></ul>
-      <input id="extra-item" type="text" placeholder="Add extra item" />
+      <input id="extra-item" type="text" list="extra-suggestions" placeholder="Add extra item" />
+      <datalist id="extra-suggestions"></datalist>
       <button id="add-extra">Add</button>
     </div>
+  </div>
+
+  <!-- Order Review & Confirmation (hidden until user generates an order) -->
+  <div id="order-section" style="display:none; margin-top:2rem;">
+    <h2>Review Your Order</h2>
+    <p>This section combines your recurring and extra items into a single draft order for your review. You can generate the order when you're ready and then confirm it.</p>
+    <!-- List of all items to be ordered -->
+    <ul id="order-list"></ul>
+    <!-- Estimated total price (optional; placeholder until prices are integrated) -->
+    <p id="order-total" style="font-weight:bold;"></p>
+    <!-- Button to compile lists into an order -->
+    <button id="generate-order">Generate Order</button>
+    <!-- Button to confirm the order (shown after order is generated) -->
+    <button id="confirm-order" style="display:none;">Confirm Order</button>
+    <!-- Status message to inform the user about the order submission -->
+    <div id="order-message" style="margin-top:1rem; color: green;"></div>
   </div>
 
   <!-- Firebase SDKs -->

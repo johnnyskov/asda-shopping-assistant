@@ -37,12 +37,169 @@ if (typeof firebase !== 'undefined') {
   const addRecurringBtn = document.getElementById('add-recurring');
   const addExtraBtn = document.getElementById('add-extra');
 
+  // References for order review and confirmation UI
+  const orderSectionDiv = document.getElementById('order-section');
+  const orderListEl = document.getElementById('order-list');
+  const orderTotalEl = document.getElementById('order-total');
+  const generateOrderBtn = document.getElementById('generate-order');
+  const confirmOrderBtn = document.getElementById('confirm-order');
+  const orderMessageDiv = document.getElementById('order-message');
+
+  // Grab datalist elements for dynamic product suggestions
+  const recurringDatalist = document.getElementById('recurring-suggestions');
+  const extraDatalist = document.getElementById('extra-suggestions');
+
+  // Attach input listeners to update suggestion lists as the user types
+  if (recurringInput) {
+    recurringInput.addEventListener('input', () => {
+      updateDatalist(recurringInput.value, recurringDatalist);
+    });
+  }
+  if (extraInput) {
+    extraInput.addEventListener('input', () => {
+      updateDatalist(extraInput.value, extraDatalist);
+    });
+  }
+
   // Initialize Firestore service
   const db = firebase.firestore ? firebase.firestore() : null;
+
+  // --- Product Suggestions Data and Helpers ---
+  // A simple list of commonly purchased grocery items. In a real-world
+  // application, this list could be generated dynamically from a product
+  // database or API. For now, it includes a few examples for milk, bread,
+  // eggs, fruit and meat so users can see suggestions as they type.
+  const suggestionItems = [
+    // Milk varieties
+    'ASDA British Milk Whole 1 Pint',
+    'ASDA British Milk Semi Skimmed 1 Pint',
+    'ASDA British Milk Skimmed 1 Pint',
+    'ASDA British Milk Whole 2 Pints',
+    'ASDA British Milk Semi Skimmed 2 Pints',
+    'ASDA British Milk Skimmed 2 Pints',
+    'ASDA British Milk Whole 4 Pints',
+    'ASDA British Milk Semi Skimmed 4 Pints',
+    'ASDA British Milk Whole 6 Pints',
+    'ASDA British Milk Semi Skimmed 6 Pints',
+    'ASDA British Milk Organic Whole 4 Pints',
+    // Bread
+    'ASDA White Bread 800g',
+    'ASDA Wholemeal Bread 800g',
+    'ASDA Thick White Bread 800g',
+    'ASDA Seeded Bread 800g',
+    // Eggs
+    'ASDA British Free Range Eggs Medium 6 Pack',
+    'ASDA British Free Range Eggs Large 12 Pack',
+    'ASDA British Barn Eggs Medium 6 Pack',
+    // Fruit
+    'ASDA Pink Lady Apples 6 Pack',
+    'ASDA Braeburn Apples 6 Pack',
+    'ASDA Granny Smith Apples 6 Pack',
+    'ASDA Bananas 5 Pack',
+    'ASDA Organic Bananas 6 Pack',
+    // Meat
+    'ASDA Chicken Breast Fillets 1kg',
+    'ASDA Chicken Thigh Fillets 1kg'
+  ];
+
+  /**
+   * Update a datalist element with suggestions that match the given query.
+   * Filters the global suggestionItems array and generates <option> elements.
+   * If the query is empty or too short, the datalist is cleared.
+   *
+   * @param {string} query The current value typed by the user.
+   * @param {HTMLDataListElement} datalist The datalist element to populate.
+   */
+  function updateDatalist(query, datalist) {
+    if (!datalist) return;
+    // Clear existing options
+    datalist.innerHTML = '';
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed || trimmed.length < 2) {
+      // Require at least 2 characters before showing suggestions
+      return;
+    }
+    // Filter suggestions by substring match
+    const matches = suggestionItems.filter(item =>
+      item.toLowerCase().includes(trimmed)
+    );
+    // Populate datalist with up to 10 suggestions
+    matches.slice(0, 10).forEach(item => {
+      const option = document.createElement('option');
+      option.value = item;
+      datalist.appendChild(option);
+    });
+  }
 
   // Keep track of the current authenticated user and Firestore listener
   let currentUser = null;
   let unsubscribeLists = null;
+
+  /**
+   * Render the draft order list on the page. Clears existing entries and
+   * populates the list with all items to be ordered.
+   * @param {Array<string>} items - Array of item strings.
+   */
+  function renderOrderList(items) {
+    if (!orderListEl) return;
+    orderListEl.innerHTML = '';
+    if (Array.isArray(items) && items.length > 0) {
+      items.forEach((item) => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        orderListEl.appendChild(li);
+      });
+    } else {
+      const li = document.createElement('li');
+      li.textContent = 'No items to order.';
+      orderListEl.appendChild(li);
+    }
+  }
+
+  /**
+   * Combine the recurring and extra lists into a single array representing
+   * the items to be ordered. Displays the order in the order section
+   * and shows the confirm button. Optionally calculates a simple total.
+   */
+  function generateOrder() {
+    if (!db || !currentUser) return;
+    // Reset UI state
+    if (orderMessageDiv) orderMessageDiv.textContent = '';
+    // Fetch the latest lists from Firestore for accuracy
+    const docRef = db.collection('users').doc(currentUser.uid);
+    docRef.get().then((doc) => {
+      const data = doc.exists ? doc.data() : {};
+      const recurringItems = Array.isArray(data.recurring) ? data.recurring : [];
+      const extraItems = Array.isArray(data.extra) ? data.extra : [];
+      const combined = [...recurringItems, ...extraItems];
+      // Render the combined list
+      renderOrderList(combined);
+      // Display a placeholder total count (future work: use actual prices)
+      if (orderTotalEl) {
+        const totalItems = combined.length;
+        orderTotalEl.textContent = totalItems > 0 ? `Total items: ${totalItems}` : '';
+      }
+      // Show order section and confirm button
+      if (orderSectionDiv) orderSectionDiv.style.display = 'block';
+      if (confirmOrderBtn) confirmOrderBtn.style.display = combined.length > 0 ? 'inline-block' : 'none';
+    }).catch((error) => {
+      console.error('Error generating order:', error);
+      alert(error.message);
+    });
+  }
+
+  /**
+   * Handler to confirm the generated order. This is a placeholder for
+   * future integration with a checkout process. It displays a success
+   * message to the user.
+   */
+  function confirmOrder() {
+    if (orderMessageDiv) {
+      orderMessageDiv.textContent = 'Order confirmed! Thank you for your purchase.';
+    }
+    // In a full implementation, this function would trigger checkout
+    // and payment through a secure payment provider such as Stripe.
+  }
 
   /**
    * Render a list of items into a given UL element.
@@ -114,6 +271,20 @@ if (typeof firebase !== 'undefined') {
         addItem('extra', value);
         extraInput.value = '';
       }
+    });
+  }
+
+  // Attach order management event listeners
+  if (generateOrderBtn) {
+    generateOrderBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      generateOrder();
+    });
+  }
+  if (confirmOrderBtn) {
+    confirmOrderBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      confirmOrder();
     });
   }
 
@@ -225,6 +396,13 @@ if (typeof firebase !== 'undefined') {
       // Subscribe to list updates
       if (unsubscribeLists) unsubscribeLists();
       unsubscribeLists = subscribeToLists(user);
+
+      // Ensure order section is reset and hidden when the user logs in
+      if (orderSectionDiv) orderSectionDiv.style.display = 'none';
+      if (orderListEl) orderListEl.innerHTML = '';
+      if (orderTotalEl) orderTotalEl.textContent = '';
+      if (confirmOrderBtn) confirmOrderBtn.style.display = 'none';
+      if (orderMessageDiv) orderMessageDiv.textContent = '';
     } else {
       // User is signed out, show registration and login buttons
       currentUser = null;
@@ -243,6 +421,13 @@ if (typeof firebase !== 'undefined') {
         unsubscribeLists();
         unsubscribeLists = null;
       }
+
+      // Hide order section and reset contents on logout
+      if (orderSectionDiv) orderSectionDiv.style.display = 'none';
+      if (orderListEl) orderListEl.innerHTML = '';
+      if (orderTotalEl) orderTotalEl.textContent = '';
+      if (confirmOrderBtn) confirmOrderBtn.style.display = 'none';
+      if (orderMessageDiv) orderMessageDiv.textContent = '';
     }
   });
 } else {
