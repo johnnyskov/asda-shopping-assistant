@@ -13,20 +13,48 @@
   <p>This is a placeholder for the ASDA shopping assistant application.</p>
   <p>The PWA skeleton includes a manifest, service worker for offline support, and basic UI ready for expansion.</p>
 
-  <script src="app.js"></script>
+  <!-- Authentication UI -->
+  <div id="auth-container">
+    <h2>User Authentication</h2>
+    <div id="auth-buttons">
+      <button id="show-register">Register</button>
+      <button id="show-login">Login</button>
+      <button id="logout" style="display:none;">Logout</button>
+    </div>
+    <div id="register-form" style="display:none; margin-top:1rem;">
+      <h3>Register</h3>
+      <input id="reg-email" type="email" placeholder="Email" />
+      <input id="reg-password" type="password" placeholder="Password" />
+      <button id="register-btn">Register</button>
+    </div>
+    <div id="login-form" style="display:none; margin-top:1rem;">
+      <h3>Login</h3>
+      <input id="login-email" type="email" placeholder="Email" />
+      <input id="login-password" type="password" placeholder="Password" />
+      <button id="login-btn">Login</button>
+    </div>
+    <div id="user-info" style="margin-top:1rem;"></div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <!-- Firebase App (the core Firebase SDK) -->
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyALthtF79yKtP0I5V1YrmaiPmSff6n2Fek",
-    authDomain: "asda-shopping-assistant.firebaseapp.com",
-    projectId: "asda-shopping-assistant",
-    storageBucket: "asda-shopping-assistant.firebasestorage.app",
-	messagingSenderId: "63338313533",
-	appId: "1:63338313533:web:36547f159699b074cd3754"
-  };
-  firebase.initializeApp(firebaseConfig);
-</script>
-<script src="app.js"></script>
+  <!-- Firebase Authentication -->
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js"></script>
+  <script>
+    // TODO: Replace with your project's Firebase configuration. You can find these values
+    // in your Firebase project settings. Without valid keys, authentication will not work.
+    const firebaseConfig = {
+      apiKey: "AIzaSyALthtF79yKtP0I5V1YrmaiPmSff6n2Fek",
+      authDomain: "asda-shopping-assistant.firebaseapp.com",
+      projectId: "asda-shopping-assistant",
+      storageBucket: "asda-shopping-assistant.firebasestorage.app",
+      messagingSenderId: "63338313533",
+      appId: "1:63338313533:web:36547f159699b074cd3754"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <script src="app.js"></script>
 </body>
 </html>
